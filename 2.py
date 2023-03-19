@@ -1,10 +1,99 @@
 from tabulate import tabulate
 from helper import *
+import math
+
+
+def dualSimplex(row, basicVars, tableau):
+    # Adding the new row
+    gomoryRow = [0]*len(tableau[row])
+    for col in range(len(tableau[row])):
+        gomoryRow[col] = tableau[row][col] - math.floor(tableau[row][col])
+    gomoryRow = list(map(lambda x: -1 * x, gomoryRow))
+    
+    # Adding slack variable
+    for i in range(len(tableau)):
+        last = tableau[i][-1]
+        tableau[i][-1] = 0
+        tableau[i].append(last)
+
+    last = gomoryRow[-1]
+    gomoryRow[-1] = 1
+    gomoryRow.append(last)
+    tableau.append(gomoryRow)
+
+    basicVars.append(len(tableau[0]))
+    exitingInd = len(tableau)-1
+    enteringInd = -1
+    enteringVal = float("inf")
+
+    for col in range(0, len(tableau[0])-1):
+        if tableau[exitingInd][col] < 0:
+            ratio = round(tableau[0][col]/tableau[exitingInd][col], 7)
+            if tableau[0][col] < 0 and ratio < enteringVal:
+                enteringVal = ratio
+                enteringInd = col
+
+    basicVars[exitingInd] = enteringInd+1
+    pivot = tableau[exitingInd][enteringInd]
+    pivotRow = copy.deepcopy(tableau[exitingInd])
+    print(enteringInd, exitingInd)
+
+    for j in range(0, len(tableau[exitingInd])):
+        tableau[exitingInd][j] /= pivot
+
+
+    for i in range(0, len(tableau)):
+        pivotColVal = tableau[i][enteringInd]
+        for j in range(0, len(tableau[0])):
+            if i == exitingInd:
+                continue
+            else:
+                tableau[i][j] -= pivotColVal * tableau[exitingInd][j]
+
+
+    # print("Done")
+    
+    # print("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+    # print("Selcted row: ", row)
+    # print(tableau)
+    # print("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+
+    return basicVars, tableau
 
 if __name__ == "__main__":
     n, u, v, tableau, b = readInput()
     if v == 0:
-        simplex(n, u, tableau, b)
+        val, basicVars, tableau = simplex(n, u, tableau, b)
     else:
-        twoPhaseSimplex(n, u, v, tableau, b)
+        val, basicVars, tableau = twoPhaseSimplex(n, u, v, tableau, b)
+
+    if val == -1: 
+        print("Infeasible")
+    elif val == 1:
+        print("Unbounded")
+    else:
+        while True:
+            # Check for fractional values
+            fraction = float('-inf')
+            row = -1
+            for i in range(1, len(tableau)):
+                tableau[i][-1] = round(tableau[i][-1], 7)
+                if math.ceil(tableau[i][-1]) != math.floor(tableau[i][-1]):
+                    temp = tableau[i][-1] - math.floor(tableau[i][-1])
+                    if round(temp, 0) > fraction:
+                        fraction = temp
+                        row = i
+
+            # Integer solutions
+            if row == -1:
+                printAns(n, val, basicVars, tableau)
+                break
+            else:
+                basicVars, tableau = dualSimplex(row, basicVars, tableau)
+                # print("================================================================")
+                # print(tableau)
+                # print("================================================================")
+                
+
+
 

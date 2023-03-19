@@ -65,6 +65,9 @@ def solve(basicVars, basicVarsList, tableau):
         pivot = tableau[exitingInd][enteringInd]
         pivotRow = copy.deepcopy(tableau[exitingInd])
 
+        for j in range(len(tableau[exitingInd])):
+            tableau[exitingInd][j] /= pivot
+
         # Updating the tableau
         # new value = old value - (corresponding key row val * col val) / pivot ele
         for i in range(len(tableau)):
@@ -72,15 +75,15 @@ def solve(basicVars, basicVarsList, tableau):
             # print(pivotColVal)
             for j in range(len(tableau[i])):
                 if i == exitingInd:
-                    tableau[i][j] = tableau[i][j]/pivot
+                    continue
                 else:
-                    tableau[i][j] = tableau[i][j] - (pivotColVal * pivotRow[j])/pivot
+                    tableau[i][j] -= pivotColVal * tableau[exitingInd][j]
 
 
-        print("==================================================")
-        print(basicVars)
-        print(tabulate(tableau))
-        print("==================================================")
+        # print("==================================================")
+        # print(basicVars)
+        # print(tableau)
+        # print("==================================================")
 
     return 0, basicVars, tableau
         
@@ -333,3 +336,14 @@ def twoPhaseSimplex(n, u, v, tableau, b):
             val, basicVars, tableau = blandsRule(bas, tab)
         
         return val, basicVars, tableau
+
+
+def printAns(n, val, basicVars, tableau):
+    if val == 2:
+        print("Cycling detected") 
+    print(round(tableau[0][-1], 7))
+    ans = [0]*n
+    for i in range(1, len(tableau)):
+        if basicVars[i]-1 < n:
+            ans[basicVars[i]-1] = round(tableau[i][-1], 7)
+    print(*ans)
