@@ -6,18 +6,18 @@ def readInput():
 
     # Cost vector
     tableau = []
-    tableau.append(list(map(int, input().split())))
+    tableau.append(list(map(float, input().split())))
 
     # <= constraints 
     for i in range(u):
-        tableau.append(list(map(int, input().split())))
+        tableau.append(list(map(float, input().split())))
 
     # >= constraints 
     for i in range(v):
-        tableau.append(list(map(int, input().split())))
+        tableau.append(list(map(float, input().split())))
 
     # RHS vector for all constraints
-    b = list(map(int, input().split()))
+    b = list(map(float, input().split()))
 
     return n, u, v, tableau, b
 
@@ -51,9 +51,6 @@ def solve(basicVars, basicVarsList, tableau):
                 exitingVal = ratio
 
         basicVars[exitingInd] = enteringInd+1
-        print(basicVars)
-        print(enteringInd, exitingInd)
-
         # Unbounded case
         if exitingInd == -1:
             return 1, basicVars, tableau
@@ -64,6 +61,65 @@ def solve(basicVars, basicVarsList, tableau):
             if curr == prev:
                 return 2, basicVars, tableau
         
+        basicVarsList.add(curr)
+        pivot = tableau[exitingInd][enteringInd]
+        pivotRow = copy.deepcopy(tableau[exitingInd])
+
+        # Updating the tableau
+        # new value = old value - (corresponding key row val * col val) / pivot ele
+        for i in range(len(tableau)):
+            pivotColVal = tableau[i][enteringInd]
+            # print(pivotColVal)
+            for j in range(len(tableau[i])):
+                if i == exitingInd:
+                    tableau[i][j] = round(tableau[i][j]/pivot, 6)
+                else:
+                    tableau[i][j] = tableau[i][j] - round((pivotColVal * pivotRow[j])/pivot, 6)
+
+
+        # print("==================================================")
+        # print(basicVars)
+        # print(tabulate(tableau))
+        # print("==================================================")
+
+    return 0, basicVars, tableau
+        
+
+def blandsRule(basicVars, tableau):
+     # Solve until there is no positive value in the first row .i.e. optimal solution is reached
+    while True:
+        # Find the entering variable
+        enteringInd = -1
+        for i in range(len(tableau[0])-1):
+            if tableau[0][i] > 0:
+                enteringInd = i
+                break
+
+        if enteringInd == -1:
+            break
+
+        # Find the exiting variable
+        exitingInd = -1
+        exitingVal = float('inf')
+
+        for i in range(1, len(tableau)):
+            num = tableau[i][-1]
+            den = tableau[i][enteringInd]
+            if den <= 0:
+                continue
+            ratio = num/den
+            if ratio < exitingVal:
+                exitingInd = i
+                exitingVal = ratio
+            elif ratio == exitingVal:
+                continue
+        
+
+        basicVars[exitingInd] = enteringInd+1
+
+        # Unbounded case
+        if exitingInd == -1:
+            return 1, basicVars, tableau
 
         pivot = tableau[exitingInd][enteringInd]
         pivotRow = copy.deepcopy(tableau[exitingInd])
@@ -80,13 +136,13 @@ def solve(basicVars, basicVarsList, tableau):
                     tableau[i][j] = tableau[i][j] - round((pivotColVal * pivotRow[j])/pivot, 6)
 
 
-        print("==================================================")
-        print(basicVars)
-        print(tabulate(tableau))
-        print("==================================================")
+        # print("==================================================")
+        # print(basicVars)
+        # print(tabulate(tableau))
+        # print("==================================================")
 
     return 0, basicVars, tableau
-        
+   
 
 def simplex(n, u, tableau, b):
     # Adding -1 for the first row
@@ -104,14 +160,16 @@ def simplex(n, u, tableau, b):
         basicVars.append(n+i)
 
     tableau[0] = list(map(lambda x: -1 * x, tableau[0]))
+    tab = copy.deepcopy(tableau)
+    bas = copy.deepcopy(basicVars)
 
-    print("==================================================")
-    print(basicVars)
-    print(tabulate(tableau))
-    print("==================================================")
-    basicVarsList = list(frozenset(basicVars))
+    # print("+++++++++++++++++++++++++++++++++++++++++")
+    # print(basicVars)
+    # print(tabulate(tableau))
+    # print("+++++++++++++++++++++++++++++++++++++++++")
+    basicVarsList = set()
+    basicVarsList.add(frozenset(basicVars))
     val, basicVars, tableau = solve(basicVars, basicVarsList, tableau) 
-    print(basicVars)
 
     if val == 0:
         print(tableau[0][-1])
@@ -119,11 +177,22 @@ def simplex(n, u, tableau, b):
         for i in range(1, len(tableau)):
             if basicVars[i]-1 < n:
                 ans[basicVars[i]-1] = tableau[i][-1]
-        print(ans)
+        print(*ans)
     elif val == 1:
         print("Unbounded")
     else:
+        # print("+++++++++++++++++++++++++++++++++++++++++")
+        # print(bas)
+        # print(tabulate(tab))
+        # print("+++++++++++++++++++++++++++++++++++++++++")
+        val, basicVars, tableau = blandsRule(bas, tab)
         print("Cycling detected") 
+        print(tableau[0][-1])
+        ans = [0]*n
+        for i in range(1, len(tableau)):
+            if basicVars[i]-1 < n:
+                ans[basicVars[i]-1] = tableau[i][-1]
+        print(*ans)
 
 
 def twoPhaseSimplex(n, u, v, tableau, b):
@@ -163,24 +232,21 @@ def twoPhaseSimplex(n, u, v, tableau, b):
         zeroes[-1] = b[i-1]
         tableau[i].extend(zeroes)
 
-    print("==================================================")
-    print(tabulate(tableau))
-    print("==================================================")
-
     tableau[0] = list(map(lambda x: -1 * x, tableau[0]))
+    tab = copy.deepcopy(tableau)
+    bas = copy.deepcopy(basicVars)
 
-    c = copy.deepcopy(tableau[0])
     zeroes = [0]*(len(tableau[0]))
     for i in artificialVars:
         zeroes[i-1] = -1
     tableau[0] = zeroes
         
     
-    print("==================================================")
-    print("Basic variables", basicVars)
-    print("Artificial variables", artificialVars)
-    print(tabulate(tableau))
-    print("==================================================")
+    # print("==================================================")
+    # print("Basic variables", basicVars)
+    # print("Artificial variables", artificialVars)
+    # print(tabulate(tableau))
+    # print("==================================================")
 
 
     # ============================================================================================= 
@@ -194,97 +260,109 @@ def twoPhaseSimplex(n, u, v, tableau, b):
             tableau[0][j] += tableau[i][j]
 
 
-    print("==================================================")
-    print("Basic variables", basicVars)
-    print(tabulate(tableau))
-    print("==================================================")
+    # print("==================================================")
+    # print("Basic variables", basicVars)
+    # print(tabulate(tableau))
+    # print("==================================================")
 
-    basicVarsList = list(frozenset(basicVars))
+    basicVarsList = set()
+    basicVarsList.add(frozenset(basicVars))
     val, basicVars, tableau = solve(basicVars, basicVarsList, tableau)
+
+    if val == 1:
+        print("Infeasible")
+        return 
+    elif val == 2:
+        val, basicVars, tableau = blandsRule(bas, tab)
 
     # ============================================================================================= 
     # Phase 2: 
     # ============================================================================================= 
-
-    if val == 0:
-        if tableau[0][-1] != 0:
-            print("Infeasible")
-        else:
-            # Check if there is any artificial variable in the basic variable list
-            found = []
-            for i in basicVars:
-                if i in artificialVars:
-                    found.append(i)
-
-            # There are no artificial variables in the basic variables
-            if len(found) == 0:
-                tableau[0] = c
-                # Drop the aritificial variable cols
-                newTableau = []
-                for i in range(0, len(tableau)):
-                    row = []
-                    for j in range(0, len(tableau[0])):
-                        if j+1 in artificialVars:
-                            continue
-                        row.append(tableau[i][j])
-                    newTableau.append(row)
-                tableau = newTableau
-            else:
-                # Drop artificial variables cols and basic variable values whose value is negative
-                oldFirstRow = copy.deepcopy(tableau[0])
-                tableau[0] = c
-                
-                newTableau = []
-                for i in range(0, len(tableau)):
-                    row = []
-                    for j in range(0, len(tableau[0])):
-                        if j+1 in artificialVars and j+1 not in found:
-                            continue
-                        if j+1 not in artificialVars and oldFirstRow[j] < 0:
-                            continue
-                        row.append(tableau[i][j])
-                    newTableau.append(row)
-                tableau = newTableau
-
-            print("==================================================")
-            print("Basic variables", basicVars)
-            print(tabulate(tableau))
-            print("==================================================")
-
-            # First make sure that first row values are zeroes for the basic variables
-            firstRow = copy.deepcopy(tableau[0])
-            for i in range(1, len(tableau)):
-                if i not in basicVars:
-                    continue
-                for j in range(len(tableau[0])):
-                    tableau[0][j] += (tableau[i][j] * (-1 * firstRow[basicVars[i]-1]))
-
-
-            print("==================================================")
-            print("Basic variables", basicVars)
-            print(tabulate(tableau))
-            print("==================================================")
-
-
-            basicVarsList = list(frozenset(basicVars))
-            val, basicVars, tableau = solve(basicVars, basicVarsList, tableau)
-
-            if val == 0:
-                print(round(tableau[0][-1], 6))
-                ans = [0]*n
-                for i in range(1, len(tableau)):
-                    if basicVars[i]-1 < n:
-                        ans[basicVars[i]-1] = round(tableau[i][-1], 6)
-                print(ans)
-            elif val == 1:
-                print("Unbounded")
-            else:
-                print("Cycling detected") 
-
-    elif val == 1:
+    
+    if tableau[0][-1] != 0:
         print("Infeasible")
     else:
-        pass
+        # Check if there is any artificial variable in the basic variable list
+        found = []
+        for i in basicVars:
+            if i in artificialVars:
+                found.append(i)
+
+        # There are no artificial variables in the basic variables
+        if len(found) == 0:
+            tableau[0] = tab[0]
+            # Drop the aritificial variable cols
+            newTableau = []
+            for i in range(0, len(tableau)):
+                row = []
+                for j in range(0, len(tableau[0])):
+                    if j+1 in artificialVars:
+                        continue
+                    row.append(tableau[i][j])
+                newTableau.append(row)
+            tableau = newTableau
+        else:
+            # Drop artificial variables cols and basic variable values whose value is negative
+            oldFirstRow = copy.deepcopy(tableau[0])
+            tableau[0] = tab[0]
+            
+            newTableau = []
+            for i in range(0, len(tableau)):
+                row = []
+                for j in range(0, len(tableau[0])):
+                    if j+1 in artificialVars and j+1 not in found:
+                        continue
+                    if j+1 not in artificialVars and oldFirstRow[j] < 0:
+                        continue
+                    row.append(tableau[i][j])
+                newTableau.append(row)
+            tableau = newTableau
+
+        # print("==================================================")
+        # print("Basic variables", basicVars)
+        # print(tabulate(tableau))
+        # print("==================================================")
+
+        # First make sure that first row values are zeroes for the basic variables
+        firstRow = copy.deepcopy(tableau[0])
+        for i in range(1, len(tableau)):
+            if i not in basicVars:
+                continue
+            for j in range(len(tableau[0])):
+                tableau[0][j] += (tableau[i][j] * (-1 * firstRow[basicVars[i]-1]))
+
+
+        # print("==================================================")
+        # print("Basic variables", basicVars)
+        # print(tabulate(tableau))
+        # print("==================================================")
+
+
+        basicVarsList = set()
+        basicVarsList.add(frozenset(basicVars))
+        val, basicVars, tableau = solve(basicVars, basicVarsList, tableau)
+
+        tab = copy.deepcopy(tableau)
+        bas = copy.deepcopy(basicVars)
+
+        if val == 0:
+            print(round(tableau[0][-1], 6))
+            ans = [0]*n
+            for i in range(1, len(tableau)):
+                if basicVars[i]-1 < n:
+                    ans[basicVars[i]-1] = round(tableau[i][-1], 6)
+            print(*ans)
+        elif val == 1:
+            print("Unbounded")
+        else:
+            val, basicVars, tableau = blandsRule(bas, tab)
+            print("Cycling detected") 
+            print(tableau[0][-1])
+            ans = [0]*n
+            for i in range(1, len(tableau)):
+                if basicVars[i]-1 < n:
+                    ans[basicVars[i]-1] = tableau[i][-1]
+            print(*ans)
 
 
 if __name__ == "__main__":
