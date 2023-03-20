@@ -340,7 +340,7 @@ def twoPhaseSimplex(n, u, v, tableau, b):
         return val, basicVars, tableau
 
 
-def printAns(n, val, basicVars, tableau):
+def printAns(n, val, basicVars, tableau, flag=False):
     if val == 2:
         print("Cycling detected") 
     print(round(tableau[0][-1], 7))
@@ -348,4 +348,6 @@ def printAns(n, val, basicVars, tableau):
     for i in range(1, len(tableau)):
         if basicVars[i]-1 < n:
             ans[basicVars[i]-1] = round(tableau[i][-1], 7)
+    if flag:
+        ans = list(map(int, ans))
     print(*ans)

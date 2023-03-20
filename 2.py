@@ -86,7 +86,7 @@ if __name__ == "__main__":
 
             # Integer solutions
             if row == -1:
-                printAns(n, val, basicVars, tableau)
+                printAns(n, val, basicVars, tableau, True)
                 break
             else:
                 basicVars, tableau = dualSimplex(row, basicVars, tableau)
