@@ -57,10 +57,13 @@ def solve(basicVars, basicVarsList, tableau):
         
         # Cycling case
         curr = frozenset(basicVars)
+        # print("================================")
+        # print("Comparing ", curr)
         for prev in basicVarsList:
             if curr == prev:
+                # print("============hereeee====================")
                 return 2, basicVars, tableau
-        
+        # print("=================out=====================================")
         basicVarsList.add(curr)
         pivot = tableau[exitingInd][enteringInd]
         pivotRow = copy.deepcopy(tableau[exitingInd])
@@ -82,7 +85,8 @@ def solve(basicVars, basicVarsList, tableau):
 
         # print("==================================================")
         # print(basicVars)
-        # print(tableau)
+        # for i in range(len(tableau)):
+        #     print(*tableau[i], sep='\t')
         # print("==================================================")
 
     return 0, basicVars, tableau
@@ -168,10 +172,11 @@ def simplex(n, u, tableau, b):
 
     # print("+++++++++++++++++++++++++++++++++++++++++")
     # print(basicVars)
-    # print(tabulate(tableau))
+    # for i in range(len(tableau)):
+    #     print(*tableau[i], sep='\t')
     # print("+++++++++++++++++++++++++++++++++++++++++")
     basicVarsList = set()
-    basicVarsList.add(frozenset(basicVars))
+    # basicVarsList.add(frozenset(basicVars))
     val, basicVars, tableau = solve(basicVars, basicVarsList, tableau) 
 
     if val == 2:
@@ -179,7 +184,7 @@ def simplex(n, u, tableau, b):
         # print(bas)
         # print(tabulate(tab))
         # print("+++++++++++++++++++++++++++++++++++++++++")
-        val, basicVars, tableau = blandsRule(bas, tab)
+        _, basicVars, tableau = blandsRule(bas, tab)
         
     return val, basicVars, tableau
 
@@ -249,18 +254,17 @@ def twoPhaseSimplex(n, u, v, tableau, b):
             tableau[0][j] += tableau[i][j]
 
     basicVarsList = set()
-    basicVarsList.add(frozenset(basicVars))
+    # basicVarsList.add(frozenset(basicVars))
     val, basicVars, tableau = solve(basicVars, basicVarsList, tableau)
 
-    print(tabulate(tableau))
-
+    # print(tabulate(tableau))
+    
     if val == 1:
-        print("hererer")
         return -1, basicVars, tableau 
     elif val == 2:
-        val, basicVars, tableau = blandsRule(bas, tab)
+        _, basicVars, tableau = blandsRule(bas, tab)
 
-
+    # print("++++++++++++++++++=Phase -1 Done+++++++++++++++++++++++++++")
     # ============================================================================================= 
     # Phase 2: 
     # ============================================================================================= 
@@ -305,35 +309,33 @@ def twoPhaseSimplex(n, u, v, tableau, b):
                 newTableau.append(row)
             tableau = newTableau
 
-        # print("==================================================")
+        # print("========================Before==========================")
         # print("Basic variables", basicVars)
         # print(tabulate(tableau))
         # print("==================================================")
 
         # First make sure that first row values are zeroes for the basic variables
         firstRow = copy.deepcopy(tableau[0])
-        for i in range(1, len(tableau)):
-            if i not in basicVars:
-                continue
+        for i in range(len(basicVars)):
             for j in range(len(tableau[0])):
                 tableau[0][j] += (tableau[i][j] * (-1 * firstRow[basicVars[i]-1]))
 
 
-        # print("==================================================")
+        # print("======================After============================")
         # print("Basic variables", basicVars)
         # print(tabulate(tableau))
         # print("==================================================")
 
 
         basicVarsList = set()
-        basicVarsList.add(frozenset(basicVars))
+        # basicVarsList.add(frozenset(basicVars))
         val, basicVars, tableau = solve(basicVars, basicVarsList, tableau)
 
         tab = copy.deepcopy(tableau)
         bas = copy.deepcopy(basicVars)
 
         if val == 2:
-            val, basicVars, tableau = blandsRule(bas, tab)
+            _, basicVars, tableau = blandsRule(bas, tab)
         
         return val, basicVars, tableau
 

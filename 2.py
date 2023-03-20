@@ -5,9 +5,11 @@ import math
 
 def dualSimplex(row, basicVars, tableau):
     # Adding the new row
-    gomoryRow = [0]*len(tableau[row])
+    # gomoryRow = [0]*len(tableau[row])
+
+    gomoryRow = []
     for col in range(len(tableau[row])):
-        gomoryRow[col] = tableau[row][col] - math.floor(tableau[row][col])
+        gomoryRow.append(tableau[row][col] - math.floor(tableau[row][col]))
     gomoryRow = list(map(lambda x: -1 * x, gomoryRow))
     
     # Adding slack variable
@@ -28,7 +30,7 @@ def dualSimplex(row, basicVars, tableau):
 
     for col in range(0, len(tableau[0])-1):
         if tableau[exitingInd][col] < 0:
-            ratio = round(tableau[0][col]/tableau[exitingInd][col], 7)
+            ratio = tableau[0][col]/tableau[exitingInd][col]
             if tableau[0][col] < 0 and ratio < enteringVal:
                 enteringVal = ratio
                 enteringInd = col
@@ -36,7 +38,6 @@ def dualSimplex(row, basicVars, tableau):
     basicVars[exitingInd] = enteringInd+1
     pivot = tableau[exitingInd][enteringInd]
     pivotRow = copy.deepcopy(tableau[exitingInd])
-    print(enteringInd, exitingInd)
 
     for j in range(0, len(tableau[exitingInd])):
         tableau[exitingInd][j] /= pivot
@@ -50,12 +51,10 @@ def dualSimplex(row, basicVars, tableau):
             else:
                 tableau[i][j] -= pivotColVal * tableau[exitingInd][j]
 
-
-    # print("Done")
-    
     # print("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
     # print("Selcted row: ", row)
-    # print(tableau)
+    # for i in range(len(tableau)):
+    #     print(*tableau[i], sep='\t')
     # print("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
 
     return basicVars, tableau
@@ -73,14 +72,15 @@ if __name__ == "__main__":
         print("Unbounded")
     else:
         while True:
-            # Check for fractional values
+            # Check for fractional values 
             fraction = float('-inf')
             row = -1
             for i in range(1, len(tableau)):
-                tableau[i][-1] = round(tableau[i][-1], 7)
-                if math.ceil(tableau[i][-1]) != math.floor(tableau[i][-1]):
+                temp = tableau[i][-1]
+                temp = round(temp, 7)
+                if math.ceil(temp) != math.floor(temp):
                     temp = tableau[i][-1] - math.floor(tableau[i][-1])
-                    if round(temp, 0) > fraction:
+                    if temp > fraction:
                         fraction = temp
                         row = i
 
@@ -91,9 +91,9 @@ if __name__ == "__main__":
             else:
                 basicVars, tableau = dualSimplex(row, basicVars, tableau)
                 # print("================================================================")
-                # print(tableau)
+                # for i in range(len(tableau)):
+                #     print(*tableau[i], sep='\t')
                 # print("================================================================")
                 
-
 
 
